@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чат</title>
+    <title>Мультипользовательский Чат</title>
     <style>
         * {
             margin: 0;
@@ -21,14 +21,130 @@
             padding: 10px;
         }
 
-        .chat-container {
+        .chat-wrapper {
+            display: flex;
             width: 100%;
-            max-width: 800px;
+            max-width: 1200px;
             height: 90vh;
             max-height: 600px;
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .contacts-sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .contacts-header {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-profile {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .user-profile input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .user-profile button {
+            width: 100%;
+            padding: 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .user-profile button:hover {
+            background: #764ba2;
+        }
+
+        .current-user {
+            padding: 10px;
+            font-size: 12px;
+            color: #667eea;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .contact-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            border-left: 4px solid #ddd;
+        }
+
+        .contact-item:hover {
+            background: #f0f0f0;
+            border-left-color: #667eea;
+        }
+
+        .contact-item.active {
+            background: #e8ecf9;
+            border-left-color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .contact-preview {
+            font-size: 12px;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .contact-status {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .chat-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -43,7 +159,7 @@
         }
 
         .chat-header h1 {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 600;
         }
 
@@ -121,6 +237,17 @@
             color: #333;
             border-radius: 4px 18px 18px 18px;
             border: 1px solid #e0e0e0;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 3px;
+            padding: 0 16px;
+        }
+
+        .message.user .message-sender {
+            text-align: right;
         }
 
         .message-time {
@@ -219,110 +346,292 @@
             opacity: 0.5;
         }
 
-        .online-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #4caf50;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: pulse 2s infinite;
+        .no-chat-selected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
+        .no-chat-selected-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .chat-wrapper {
+                flex-direction: column;
             }
-            50% {
-                opacity: 0.5;
+
+            .contacts-sidebar {
+                width: 100%;
+                height: 150px;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .chat-container {
+                flex: 1;
+            }
+
+            .message-content {
+                max-width: 85%;
             }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>💬 Мой Чат</h1>
-            <p><span class="online-indicator"></span>Онлайн</p>
-        </div>
-
-        <div class="chat-messages" id="messages">
-            <div class="message bot">
-                <div>
-                    <div class="message-content">
-                        Привет! 👋 Я здесь, чтобы помочь тебе. О чем ты хочешь поговорить?
-                    </div>
-                    <div class="message-time">10:30</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-input-area">
-            <div class="input-field">
-                <button class="emoji-btn" onclick="addEmoji('😊')">😊</button>
+    <div class="chat-wrapper">
+        <div class="contacts-sidebar">
+            <div class="contacts-header">👥 Контакты</div>
+            
+            <div class="user-profile">
                 <input 
                     type="text" 
-                    id="messageInput" 
-                    placeholder="Напишите сообщение..." 
-                    onkeypress="handleKeyPress(event)"
+                    id="userNameInput" 
+                    placeholder="Введите ваше имя" 
+                    maxlength="20"
                 >
+                <button onclick="setCurrentUser()">Вход</button>
+                <div class="current-user" id="currentUserDisplay"></div>
             </div>
-            <button class="send-btn" onclick="sendMessage()">➤</button>
+
+            <div class="contacts-list" id="contactsList"></div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1 id="chatTitle">💬 Мультиплеер Чат</h1>
+                <p><span id="onlineIndicator" style="display: none;" class="contact-status"></span><span id="chatStatus">Выберите контакт</span></p>
+            </div>
+
+            <div class="chat-messages" id="messages">
+                <div class="no-chat-selected">
+                    <div class="no-chat-selected-icon">👋</div>
+                    <p>Выберите контакт или создайте новый чат</p>
+                </div>
+            </div>
+
+            <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                <div class="input-field">
+                    <button class="emoji-btn" onclick="addEmoji('😊')">😊</button>
+                    <button class="emoji-btn" onclick="addEmoji('👍')">👍</button>
+                    <button class="emoji-btn" onclick="addEmoji('❤️')">❤️</button>
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Напишите сообщение..." 
+                        onkeypress="handleKeyPress(event)"
+                    >
+                </div>
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
         </div>
     </div>
 
     <script>
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
+        const contactsList = document.getElementById('contactsList');
+        const userNameInput = document.getElementById('userNameInput');
+        const chatInputArea = document.getElementById('chatInputArea');
+        const currentUserDisplay = document.getElementById('currentUserDisplay');
 
-        function getCurrentTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
+        let currentUser = localStorage.getItem('currentUser') || '';
+        let selectedContact = null;
+        let allUsers = {};
+        let conversations = {};
+
+        // Инициализация
+        function init() {
+            loadAllData();
+            renderCurrentUser();
+            renderContactsList();
+            
+            // Слушаем изменения в других вкладках
+            window.addEventListener('storage', () => {
+                loadAllData();
+                renderContactsList();
+                if (selectedContact) {
+                    renderMessages();
+                }
+            });
+
+            // Периодически обновляем (для одной вкладки)
+            setInterval(() => {
+                if (selectedContact) {
+                    renderMessages();
+                }
+            }, 1000);
         }
 
-        function addMessage(text, isUser = true) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+        function loadAllData() {
+            allUsers = JSON.parse(localStorage.getItem('chatUsers')) || {};
+            conversations = JSON.parse(localStorage.getItem('chatConversations')) || {};
+        }
+
+        function saveAllData() {
+            localStorage.setItem('chatUsers', JSON.stringify(allUsers));
+            localStorage.setItem('chatConversations', JSON.stringify(conversations));
+        }
+
+        function setCurrentUser() {
+            const name = userNameInput.value.trim();
+            if (!name) {
+                alert('Пожалуйста, введите имя');
+                return;
+            }
+
+            currentUser = name;
+            localStorage.setItem('currentUser', currentUser);
             
-            const content = document.createElement('div');
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            messageContent.textContent = text;
+            if (!allUsers[currentUser]) {
+                allUsers[currentUser] = {
+                    name: currentUser,
+                    created: new Date().toISOString(),
+                    lastSeen: new Date().toISOString()
+                };
+                saveAllData();
+            }
 
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'message-time';
-            timeDiv.textContent = getCurrentTime();
+            renderCurrentUser();
+            renderContactsList();
+            userNameInput.value = '';
+        }
 
-            content.appendChild(messageContent);
-            content.appendChild(timeDiv);
-            messageDiv.appendChild(content);
+        function renderCurrentUser() {
+            if (currentUser) {
+                currentUserDisplay.textContent = `✓ ${currentUser}`;
+                userNameInput.style.display = 'none';
+                document.querySelector('.user-profile button').style.display = 'none';
+            } else {
+                currentUserDisplay.textContent = '';
+                userNameInput.style.display = 'block';
+                document.querySelector('.user-profile button').style.display = 'block';
+            }
+        }
 
-            messagesContainer.appendChild(messageDiv);
+        function getConversationKey(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
+
+        function renderContactsList() {
+            if (!currentUser) {
+                contactsList.innerHTML = '<p style="padding: 10px; color: #999;">Сначала введите ваше имя</p>';
+                return;
+            }
+
+            let html = '';
+            const users = Object.keys(allUsers).filter(u => u !== currentUser);
+
+            if (users.length === 0) {
+                html = '<p style="padding: 10px; color: #999;">Откройте чат на другом устройстве/вкладке и добавьте пользователя</p>';
+            } else {
+                users.forEach(user => {
+                    const convKey = getConversationKey(currentUser, user);
+                    const conv = conversations[convKey] || { messages: [] };
+                    const lastMsg = conv.messages && conv.messages.length > 0 
+                        ? conv.messages[conv.messages.length - 1].text 
+                        : 'Нет сообщений';
+                    
+                    html += `
+                        <div class="contact-item ${selectedContact === user ? 'active' : ''}" onclick="selectContact('${user}')">
+                            <div class="contact-name">
+                                <span class="contact-status"></span>${user}
+                            </div>
+                            <div class="contact-preview">${lastMsg}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            contactsList.innerHTML = html;
+        }
+
+        function selectContact(user) {
+            if (!currentUser) {
+                alert('Сначала введите ваше имя');
+                return;
+            }
+
+            selectedContact = user;
+            renderContactsList();
+            renderMessages();
+            chatInputArea.style.display = 'flex';
+            messageInput.focus();
+        }
+
+        function renderMessages() {
+            if (!selectedContact) return;
+
+            const convKey = getConversationKey(currentUser, selectedContact);
+            const conv = conversations[convKey] || { messages: [] };
+
+            document.getElementById('chatTitle').textContent = `💬 ${selectedContact}`;
+            document.getElementById('chatStatus').innerHTML = `<span class="contact-status"></span>Онлайн`;
+
+            let html = '';
+            if (conv.messages && conv.messages.length > 0) {
+                conv.messages.forEach(msg => {
+                    const isUser = msg.sender === currentUser;
+                    const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    html += `
+                        <div class="message ${isUser ? 'user' : 'bot'}">
+                            <div>
+                                <div class="message-sender">${msg.sender}</div>
+                                <div class="message-content">${escapeHtml(msg.text)}</div>
+                                <div class="message-time">${time}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👋</div>
+                        <p>Начните разговор с ${selectedContact}!</p>
+                    </div>
+                `;
+            }
+
+            messagesContainer.innerHTML = html;
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function sendMessage() {
+            if (!currentUser || !selectedContact) {
+                alert('Выберите контакт');
+                return;
+            }
+
             const text = messageInput.value.trim();
-            
-            if (text === '') return;
+            if (!text) return;
 
-            addMessage(text, true);
+            const convKey = getConversationKey(currentUser, selectedContact);
+            if (!conversations[convKey]) {
+                conversations[convKey] = { messages: [] };
+            }
+
+            conversations[convKey].messages.push({
+                sender: currentUser,
+                text: text,
+                timestamp: new Date().toISOString()
+            });
+
+            saveAllData();
             messageInput.value = '';
+            renderMessages();
+            renderContactsList();
 
-            // Имитация ответа бота
-            setTimeout(() => {
-                const responses = [
-                    'Интересно! Расскажи подробнее.',
-                    'Я согласен с тобой! 👍',
-                    'Это было полезно для меня. Спасибо!',
-                    'Хороший вопрос! Дай-ка я подумаю...',
-                    'Совершенно верно! 🎯',
-                ];
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                addMessage(randomResponse, false);
-            }, 500);
+            // Синхронизация с другими вкладками
+            window.dispatchEvent(new Event('storage'));
         }
 
         function handleKeyPress(event) {
@@ -335,6 +644,14 @@
             messageInput.value += emoji;
             messageInput.focus();
         }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        init();
     </script>
 </body>
 </html>
